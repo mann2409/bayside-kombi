@@ -151,9 +151,7 @@
     } catch (_) {}
     liftVeil();
 
-    if (reduceMotion) return;
-
-    if (heroLines.length) {
+    if (heroLines.length && !reduceMotion) {
       sharpenSet(heroLines);
       sharpenTo(heroLines, { delay: 0.15 });
     }
@@ -240,18 +238,33 @@
   video.setAttribute("playsinline", "");
   video.setAttribute("webkit-playsinline", "");
 
-  if (reduceMotion) {
-    liftVeil();
-  } else {
-    loadVideoAsBlob(video).then(() => {
-      heroState.primed = false;
-      heroState.priming = false;
+  function startHeroVideo() {
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("muted", "");
+
+    const bind = () => {
       if (video.readyState >= 1) onHeroMetadata();
       else video.addEventListener("loadedmetadata", onHeroMetadata, { once: true });
       primeVideo();
+    };
+
+    if (isIOS) {
+      bind();
+      return;
+    }
+
+    loadVideoAsBlob(video).then(() => {
+      heroState.primed = false;
+      heroState.priming = false;
+      bind();
     });
-    video.addEventListener("error", liftVeil, { once: true });
   }
+
+  video.addEventListener("error", liftVeil, { once: true });
+  startHeroVideo();
 
   /* ----------------------------------------------------------------------
      2. KINETIC TYPE — lift + rack into focus, ghost stays soft
@@ -314,39 +327,33 @@
     bookVideo.setAttribute("playsinline", "");
     bookVideo.setAttribute("webkit-playsinline", "");
 
-    if (reduceMotion) {
-      bookVideo.pause();
-      bookVideo.removeAttribute("autoplay");
-    } else {
-      const tryPlay = () => {
-        bookVideo.muted = true;
-        const play = bookVideo.play();
-        if (play && typeof play.catch === "function") play.catch(() => {});
-      };
+    const tryPlay = () => {
+      bookVideo.muted = true;
+      const play = bookVideo.play();
+      if (play && typeof play.catch === "function") play.catch(() => {});
+    };
 
-      bookVideo.addEventListener("playing", () => {
-        bookVideo.classList.add("is-playing");
-      });
+    bookVideo.addEventListener("playing", () => {
+      bookVideo.classList.add("is-playing");
+    });
 
-      const footer = document.getElementById("book");
-      if ("IntersectionObserver" in window && footer) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) tryPlay();
-              else bookVideo.pause();
-            });
-          },
-          { threshold: 0.2, rootMargin: "30% 0px" }
-        );
-        io.observe(footer);
-      } else {
-        tryPlay();
-      }
-
-      window.addEventListener("pointerdown", tryPlay, { once: true, passive: true });
-      window.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    const footer = document.getElementById("book");
+    if ("IntersectionObserver" in window && footer) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) tryPlay();
+            else if (!isIOS) bookVideo.pause();
+          });
+        },
+        { threshold: 0.15, rootMargin: "40% 0px" }
+      );
+      io.observe(footer);
     }
+
+    tryPlay();
+    window.addEventListener("pointerdown", tryPlay, { passive: true });
+    window.addEventListener("touchend", tryPlay, { passive: true });
   }
 
   /* ----------------------------------------------------------------------

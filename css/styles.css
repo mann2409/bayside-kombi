@@ -693,7 +693,6 @@ a {
 /* ----- Reduced motion --------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .hero { height: 100vh; }
   .timeline { height: auto; }
   .timeline__sticky {
     position: relative;
@@ -723,7 +722,6 @@ a {
     mask-image: none;
   }
   .hero__scroll i { animation: none; }
-  .footer__video { display: none; }
 }
 
 /* ----- Breakpoints ------------------------------------------------------ */
