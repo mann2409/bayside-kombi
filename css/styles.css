@@ -391,15 +391,20 @@ a {
   height: 100vh;
   height: 100dvh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(1.5rem, 3.2vw, 3.5rem);
   overflow: hidden;
-  padding: calc(var(--nav-h) + 0.75rem) 0 1.75rem;
+  padding: calc(var(--nav-h) + 1rem) var(--pad) 2rem;
 }
 
 .timeline__mast {
   flex: 0 0 auto;
-  padding: 0 var(--pad);
-  margin-bottom: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
 }
 
 .drums {
@@ -407,7 +412,7 @@ a {
   align-items: flex-start;
   gap: 0.02em;
   margin-top: 0.4rem;
-  font-size: clamp(4.4rem, 13vw, 10.5rem);
+  font-size: clamp(3.6rem, 8.4vw, 8rem);
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -449,9 +454,10 @@ a {
 
 .rail-viewport {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
-  margin: 0 var(--pad);
+  height: 100%;
   overflow: hidden;
 }
 
@@ -487,7 +493,7 @@ a {
 .card__frame img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   filter: saturate(0.92) contrast(1.05);
 }
@@ -733,8 +739,24 @@ a {
     height: 520vh;
   }
 
+  .timeline__sticky {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: calc(var(--nav-h) + 0.75rem) var(--pad) 1.25rem;
+  }
+
+  .timeline__mast {
+    flex: 0 0 auto;
+  }
+
+  .rail-viewport {
+    flex: 1 1 auto;
+    height: auto;
+  }
+
   .drums {
-    font-size: clamp(3.6rem, 18vw, 5.6rem);
+    font-size: clamp(3.2rem, 16vw, 5.2rem);
   }
 
   .card__chip {
