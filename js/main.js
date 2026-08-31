@@ -250,13 +250,44 @@
   const bookVideo = document.getElementById("book-video");
   if (bookVideo) {
     bookVideo.muted = true;
+    bookVideo.defaultMuted = true;
+    bookVideo.playsInline = true;
+    bookVideo.setAttribute("muted", "");
+    bookVideo.setAttribute("playsinline", "");
+    bookVideo.setAttribute("webkit-playsinline", "");
+
     if (reduceMotion) {
       bookVideo.pause();
       bookVideo.removeAttribute("autoplay");
     } else {
-      const tryPlay = () => bookVideo.play().catch(() => {});
-      if (bookVideo.readyState >= 2) tryPlay();
-      else bookVideo.addEventListener("canplay", tryPlay, { once: true });
+      const tryPlay = () => {
+        bookVideo.muted = true;
+        const play = bookVideo.play();
+        if (play && typeof play.catch === "function") play.catch(() => {});
+      };
+
+      bookVideo.addEventListener("playing", () => {
+        bookVideo.classList.add("is-playing");
+      });
+
+      const footer = document.getElementById("book");
+      if ("IntersectionObserver" in window && footer) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) tryPlay();
+              else bookVideo.pause();
+            });
+          },
+          { threshold: 0.2, rootMargin: "30% 0px" }
+        );
+        io.observe(footer);
+      } else {
+        tryPlay();
+      }
+
+      window.addEventListener("pointerdown", tryPlay, { once: true, passive: true });
+      window.addEventListener("touchstart", tryPlay, { once: true, passive: true });
     }
   }
 

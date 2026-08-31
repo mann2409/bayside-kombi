@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=odometer-row2" />
+  <link rel="stylesheet" href="css/styles.css?v=book-ios" />
 </head>
 <body>
   <div class="veil" id="veil" aria-hidden="true">
@@ -187,12 +187,12 @@
         class="footer__video"
         muted
         playsinline
-        autoplay
+        webkit-playsinline
         loop
-        preload="auto"
+        preload="metadata"
         poster="images/book-poster.jpg"
       >
-        <source src="videos/sunset.mp4" type="video/mp4" />
+        <source src="videos/sunset.mp4?v=ios" type="video/mp4" />
       </video>
       <div class="footer__veil"></div>
     </div>
@@ -211,6 +211,6 @@
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script src="js/main.js?v=book-ios"></script>
 </body>
 </html>

@@ -562,6 +562,7 @@ a {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  background: #000 url("../images/book-poster.jpg") center / cover no-repeat;
 }
 
 .footer__video {
@@ -573,6 +574,14 @@ a {
   min-height: 100%;
   object-fit: cover;
   object-position: center;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.footer__video.is-playing {
+  opacity: 1;
 }
 
 .footer__veil {
