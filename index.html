@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=hero-frames" />
+  <link rel="stylesheet" href="css/styles.css?v=hero-mp4" />
 </head>
 <body>
   <div class="veil" id="veil" aria-hidden="true">
@@ -36,12 +36,22 @@
   </header>
 
   <!-- ===================================================================
-       SECTION 1 — Hero: sticky frame sequence, ~6 viewport pin
-       Scroll maps to ffout001–192 so the van drives on iPhone and desktop.
+       SECTION 1 — Hero: sticky video, ~6 viewport pin
+       Scroll maps to currentTime so the van drives on scroll.
        =================================================================== -->
   <section class="hero" id="hero">
     <div class="hero__sticky">
-      <canvas id="hero-seq" class="hero__seq" aria-hidden="true"></canvas>
+      <video
+        id="hero-video"
+        class="hero__video"
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        poster="images/hero-poster.jpg?v=3"
+      >
+        <source src="videos/hero.mp4?v=1" type="video/mp4" />
+      </video>
 
       <div class="hero__vignette" aria-hidden="true"></div>
 
@@ -203,6 +213,6 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=hero-frames"></script>
+  <script src="js/main.js?v=hero-mp4"></script>
 </body>
 </html>

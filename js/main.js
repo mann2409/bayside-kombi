@@ -73,141 +73,52 @@
   }
 
   /* ----------------------------------------------------------------------
-     1. HERO — GIF frame sequence scrubbed to scroll
+     1. HERO — 1080p video, time scrubbed to scroll
      ---------------------------------------------------------------------- */
   const hero = document.getElementById("hero");
-  const canvas = document.getElementById("hero-seq");
+  const video = document.getElementById("hero-video");
   const heroLines = gsap.utils.toArray(".hero__line");
-  const FRAME_COUNT = 192;
-  const frames = new Array(FRAME_COUNT);
-  const ctx = canvas ? canvas.getContext("2d", { alpha: false }) : null;
-  let heroIndex = 0;
-  let canvasW = 0;
-  let canvasH = 0;
 
   if (heroLines.length && !reduceMotion) sharpenSet(heroLines);
 
-  function frameSrc(i) {
-    return `images/hero-frames/ffout${String(i + 1).padStart(3, "0")}.gif`;
-  }
+  const heroState = {
+    duration: 0,
+    target: 0,
+    seeking: false,
+    ready: false,
+    seekTimer: 0,
+  };
 
-  function ensureFrame(i) {
-    if (i < 0 || i >= FRAME_COUNT) return null;
-    if (frames[i]) return frames[i];
-    const img = new Image();
-    img.decoding = "async";
-    img.src = frameSrc(i);
-    frames[i] = img;
-    return img;
-  }
+  function applyHeroTime() {
+    if (!heroState.ready || !video) return;
+    const next = heroState.target;
+    if (!Number.isFinite(next)) return;
+    if (Math.abs(video.currentTime - next) < (isIOS ? 0.05 : 0.02)) return;
 
-  function sizeCanvas() {
-    if (!canvas || !ctx) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    canvasW = Math.max(1, Math.round(w * dpr));
-    canvasH = Math.max(1, Math.round(h * dpr));
-    canvas.width = canvasW;
-    canvas.height = canvasH;
-    drawHeroFrame(heroIndex, true);
-  }
-
-  function drawCover(img) {
-    if (!ctx || !img || !img.naturalWidth) return;
-    const ir = img.naturalWidth / img.naturalHeight;
-    const cr = canvasW / canvasH;
-    let dw;
-    let dh;
-    let dx;
-    let dy;
-    if (ir > cr) {
-      dh = canvasH;
-      dw = canvasH * ir;
-      dx = (canvasW - dw) / 2;
-      dy = 0;
-    } else {
-      dw = canvasW;
-      dh = canvasW / ir;
-      dx = 0;
-      dy = (canvasH - dh) * 0.45;
-    }
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvasW, canvasH);
-    ctx.drawImage(img, dx, dy, dw, dh);
-  }
-
-  function drawHeroFrame(i, force) {
-    const img = ensureFrame(i);
-    if (!force && i === heroIndex && img && img.complete && img.naturalWidth) return;
-    heroIndex = i;
-    if (img && img.complete && img.naturalWidth) {
-      drawCover(img);
-      return;
-    }
-    if (img) {
-      img.addEventListener(
-        "load",
-        () => {
-          if (heroIndex === i) drawCover(img);
-        },
-        { once: true }
-      );
-    }
-    for (let k = i - 1; k >= 0; k -= 1) {
-      const prev = frames[k];
-      if (prev && prev.complete && prev.naturalWidth) {
-        drawCover(prev);
-        break;
+    if (isIOS || !heroState.seeking) {
+      heroState.seeking = true;
+      try {
+        video.currentTime = next;
+      } catch (_) {
+        heroState.seeking = false;
       }
+      window.clearTimeout(heroState.seekTimer);
+      heroState.seekTimer = window.setTimeout(() => {
+        heroState.seeking = false;
+      }, 90);
     }
   }
 
-  function prefetchAround(i) {
-    for (let k = i - 8; k <= i + 20; k += 1) ensureFrame(k);
-  }
-
-  function startHeroSequence() {
-    if (!canvas || !ctx || !hero) {
-      liftVeil();
-      return;
-    }
-
-    sizeCanvas();
-    window.addEventListener("resize", sizeCanvas);
-
-    const first = ensureFrame(0);
-    const go = () => {
-      drawHeroFrame(0, true);
-      liftVeil();
-      for (let i = 1; i < 40; i += 1) ensureFrame(i);
-    };
-    if (first.complete && first.naturalWidth) go();
-    else first.addEventListener("load", go, { once: true });
-
-    const proxy = { p: 0 };
-    gsap.to(proxy, {
-      p: 1,
-      ease: "none",
-      scrollTrigger: {
-        trigger: hero,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: isIOS ? 0.05 : 0.25,
-        invalidateOnRefresh: true,
-        onUpdate: () => {
-          const i = Math.round(proxy.p * (FRAME_COUNT - 1));
-          prefetchAround(i);
-          drawHeroFrame(i);
-        },
-      },
+  if (video) {
+    video.addEventListener("seeked", () => {
+      heroState.seeking = false;
+      applyHeroTime();
     });
+  }
 
-    if (heroLines.length && !reduceMotion) {
-      sharpenSet(heroLines);
-      sharpenTo(heroLines, { delay: 0.15 });
-    }
+  gsap.ticker.add(applyHeroTime);
 
+  function wireHeroCopy() {
     gsap.to(".hero__copy", {
       opacity: 0,
       y: -40,
@@ -232,11 +143,114 @@
     });
   }
 
+  function wireHeroScrub() {
+    if (!video || !hero || heroState.ready) return;
+    const duration = video.duration;
+    if (!duration || !Number.isFinite(duration)) return;
+
+    heroState.duration = duration;
+    heroState.ready = true;
+    video.pause();
+    try {
+      video.currentTime = 0;
+    } catch (_) {}
+    liftVeil();
+
+    if (heroLines.length && !reduceMotion) {
+      sharpenSet(heroLines);
+      sharpenTo(heroLines, { delay: 0.15 });
+    }
+
+    const proxy = { t: 0 };
+    gsap.to(proxy, {
+      t: Math.max(0, duration - 0.04),
+      ease: "none",
+      scrollTrigger: {
+        trigger: hero,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: isIOS ? 0.05 : 0.12,
+        invalidateOnRefresh: true,
+      },
+      onUpdate: () => {
+        heroState.target = proxy.t;
+        applyHeroTime();
+      },
+    });
+  }
+
+  function primeHero() {
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    const play = video.play();
+    if (play && typeof play.then === "function") {
+      play
+        .then(() => {
+          video.pause();
+          applyHeroTime();
+        })
+        .catch(() => {});
+    }
+  }
+
+  async function loadHeroAsBlob() {
+    const src = video.currentSrc || video.querySelector("source")?.src;
+    if (!src || src.startsWith("blob:")) return;
+    const res = await fetch(src);
+    if (!res.ok) return;
+    const url = URL.createObjectURL(await res.blob());
+    await new Promise((resolve, reject) => {
+      const done = () => resolve();
+      video.addEventListener("loadedmetadata", done, { once: true });
+      video.addEventListener("error", () => reject(new Error("hero blob")), { once: true });
+      while (video.firstChild) video.removeChild(video.firstChild);
+      video.src = url;
+      video.load();
+    });
+  }
+
+  function bindHeroVideo() {
+    video.addEventListener("loadedmetadata", wireHeroScrub);
+    video.addEventListener("durationchange", wireHeroScrub);
+    video.addEventListener("canplay", wireHeroScrub);
+    if (video.readyState >= 1) wireHeroScrub();
+    primeHero();
+  }
+
   if (isIOS) ScrollTrigger.normalizeScroll(true);
 
   liftVeil();
   window.setTimeout(liftVeil, 800);
-  startHeroSequence();
+  wireHeroCopy();
+
+  if (video) {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.addEventListener("error", liftVeil, { once: true });
+    window.addEventListener("pointerdown", primeHero, { once: true, passive: true });
+    window.addEventListener("touchend", primeHero, { once: true, passive: true });
+    ScrollTrigger.addEventListener("scrollStart", primeHero);
+
+    if (isIOS) bindHeroVideo();
+    else {
+      Promise.race([
+        loadHeroAsBlob(),
+        new Promise((resolve) => window.setTimeout(resolve, 4000)),
+      ])
+        .catch(() => {})
+        .finally(() => bindHeroVideo());
+    }
+  }
 
   /* ----------------------------------------------------------------------
      2. KINETIC TYPE — lift + rack into focus, ghost stays soft

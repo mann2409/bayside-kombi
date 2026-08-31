@@ -61,6 +61,7 @@ video {
   max-width: 100%;
 }
 
+.hero__video,
 .footer__video {
   max-width: none;
 }
@@ -227,14 +228,18 @@ a {
   touch-action: pan-y;
 }
 
-.hero__seq {
+.hero__video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
   pointer-events: none;
   display: block;
-  background: #000 url("../images/hero-frames/ffout001.gif") center / cover no-repeat;
+  background: #000 url("../images/hero-poster.jpg?v=3") center / cover no-repeat;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .hero__vignette {
