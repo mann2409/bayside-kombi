@@ -7,11 +7,22 @@
 (() => {
   "use strict";
 
+  const veil = document.getElementById("veil");
+  function liftVeil() {
+    if (veil) veil.classList.add("is-gone");
+  }
+  liftVeil();
+
+  if (typeof gsap === "undefined") return;
+
   gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isIOS =
+    /iP(hone|od|ad)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const progressBar = document.getElementById("progress");
-  const veil = document.getElementById("veil");
 
   ScrollTrigger.create({
     start: 0,
@@ -20,10 +31,6 @@
       if (progressBar) progressBar.style.width = `${self.progress * 100}%`;
     },
   });
-
-  function liftVeil() {
-    if (veil) veil.classList.add("is-gone");
-  }
 
   /* ----------------------------------------------------------------------
      Sharpen — blur / scale / Y settle + mask opens left → right
@@ -171,6 +178,7 @@
     if (heroState.primed) return;
     heroState.primed = true;
     video.muted = true;
+    video.playsInline = true;
     const play = video.play();
     if (play && typeof play.then === "function") {
       play
@@ -183,16 +191,26 @@
   }
 
   window.addEventListener("pointerdown", primeVideo, { once: true, passive: true });
-  window.addEventListener("touchstart", primeVideo, { once: true, passive: true });
+  window.addEventListener("touchend", primeVideo, { once: true, passive: true });
+
+  liftVeil();
+  window.setTimeout(liftVeil, 800);
 
   if (reduceMotion) {
     liftVeil();
+  } else if (isIOS) {
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    if (video.readyState >= 1) onHeroMetadata();
+    else video.addEventListener("loadedmetadata", onHeroMetadata, { once: true });
+    video.addEventListener("error", liftVeil, { once: true });
   } else {
     loadVideoAsBlob(video).then(() => {
       if (video.readyState >= 1) onHeroMetadata();
       else video.addEventListener("loadedmetadata", onHeroMetadata, { once: true });
     });
-    window.setTimeout(liftVeil, 2600);
   }
 
   /* ----------------------------------------------------------------------
