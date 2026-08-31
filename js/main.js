@@ -319,9 +319,26 @@
       if (play && typeof play.catch === "function") play.catch(() => {});
     };
 
-    bookVideo.addEventListener("playing", () => {
-      bookVideo.classList.add("is-playing");
-    });
+    bookVideo.addEventListener("canplay", tryPlay);
+    bookVideo.addEventListener("loadeddata", tryPlay);
+
+    async function prepareBook() {
+      const src = bookVideo.currentSrc || bookVideo.querySelector("source")?.src;
+      if (src && !src.startsWith("blob:")) {
+        try {
+          const res = await fetch(src);
+          if (res.ok) {
+            const url = URL.createObjectURL(await res.blob());
+            while (bookVideo.firstChild) bookVideo.removeChild(bookVideo.firstChild);
+            bookVideo.src = url;
+            bookVideo.load();
+          }
+        } catch (_) {
+          /* keep the file src */
+        }
+      }
+      tryPlay();
+    }
 
     const footer = document.getElementById("book");
     if ("IntersectionObserver" in window && footer) {
@@ -337,7 +354,7 @@
       io.observe(footer);
     }
 
-    tryPlay();
+    prepareBook();
     window.addEventListener("pointerdown", tryPlay, { passive: true });
     window.addEventListener("touchend", tryPlay, { passive: true });
   }
