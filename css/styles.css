@@ -570,7 +570,7 @@ a {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #000 url("../images/book-poster.jpg") center / cover no-repeat;
+  background: #000 url("../images/book-poster.jpg?v=1") center / cover no-repeat;
 }
 
 .footer__video {
