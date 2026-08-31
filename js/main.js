@@ -86,13 +86,24 @@
     target: 0,
     seeking: false,
     primed: false,
+    priming: false,
     ready: false,
   };
 
   function applyHeroTime() {
-    if (!heroState.ready || heroState.seeking) return;
+    if (!heroState.ready) return;
     const next = heroState.target;
-    if (Math.abs(video.currentTime - next) < 0.012) return;
+    if (!Number.isFinite(next)) return;
+    if (Math.abs(video.currentTime - next) < (isIOS ? 0.04 : 0.012)) return;
+
+    if (isIOS) {
+      try {
+        video.currentTime = next;
+      } catch (_) {}
+      return;
+    }
+
+    if (heroState.seeking) return;
     heroState.seeking = true;
     try {
       video.currentTime = next;
@@ -105,6 +116,9 @@
     heroState.seeking = false;
     applyHeroTime();
   });
+  video.addEventListener("timeupdate", () => {
+    if (heroState.seeking) heroState.seeking = false;
+  });
 
   gsap.ticker.add(applyHeroTime);
 
@@ -115,17 +129,26 @@
       const res = await fetch(src);
       if (!res.ok) throw new Error("fetch failed");
       el.src = URL.createObjectURL(await res.blob());
+      el.load();
     } catch (_) {
       /* file:// fallback — keep the original src */
     }
   }
 
   function onHeroMetadata() {
-    heroState.duration = video.duration || 0;
-    if (!heroState.duration || heroState.ready) return;
+    const duration = video.duration;
+    if (!duration || !Number.isFinite(duration)) {
+      video.addEventListener("durationchange", onHeroMetadata, { once: true });
+      primeVideo();
+      return;
+    }
+    if (heroState.ready) return;
+    heroState.duration = duration;
     heroState.ready = true;
     video.pause();
-    video.currentTime = 0;
+    try {
+      video.currentTime = 0;
+    } catch (_) {}
     liftVeil();
 
     if (reduceMotion) return;
@@ -143,10 +166,12 @@
         trigger: hero,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.4,
+        scrub: isIOS ? 0.15 : 0.4,
+        invalidateOnRefresh: true,
       },
       onUpdate: () => {
         heroState.target = proxy.t;
+        if (isIOS) applyHeroTime();
       },
     });
 
@@ -175,42 +200,57 @@
   }
 
   function primeVideo() {
-    if (heroState.primed) return;
-    heroState.primed = true;
+    if (heroState.primed || heroState.priming) return;
+    heroState.priming = true;
     video.muted = true;
+    video.defaultMuted = true;
     video.playsInline = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
     const play = video.play();
     if (play && typeof play.then === "function") {
       play
         .then(() => {
+          heroState.primed = true;
+          heroState.priming = false;
           video.pause();
           applyHeroTime();
         })
-        .catch(() => {});
+        .catch(() => {
+          heroState.priming = false;
+        });
+    } else {
+      heroState.primed = true;
+      heroState.priming = false;
     }
   }
 
+  if (isIOS) ScrollTrigger.normalizeScroll(true);
+
   window.addEventListener("pointerdown", primeVideo, { once: true, passive: true });
   window.addEventListener("touchend", primeVideo, { once: true, passive: true });
+  ScrollTrigger.addEventListener("scrollStart", primeVideo);
 
   liftVeil();
   window.setTimeout(liftVeil, 800);
 
+  video.muted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+
   if (reduceMotion) {
     liftVeil();
-  } else if (isIOS) {
-    video.muted = true;
-    video.playsInline = true;
-    video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
-    if (video.readyState >= 1) onHeroMetadata();
-    else video.addEventListener("loadedmetadata", onHeroMetadata, { once: true });
-    video.addEventListener("error", liftVeil, { once: true });
   } else {
     loadVideoAsBlob(video).then(() => {
+      heroState.primed = false;
+      heroState.priming = false;
       if (video.readyState >= 1) onHeroMetadata();
       else video.addEventListener("loadedmetadata", onHeroMetadata, { once: true });
+      primeVideo();
     });
+    video.addEventListener("error", liftVeil, { once: true });
   }
 
   /* ----------------------------------------------------------------------
