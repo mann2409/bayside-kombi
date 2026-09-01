@@ -1,6 +1,6 @@
 /* ============================================================================
    Bayside Kombi — luxury automotive showcase
-   Porsche mechanics: long hero pin, digit drums, peeking rail, sharpen type.
+   Porsche mechanics: long hero pin, pinned occasions, cream gallery, FAQ.
    ============================================================================ */
 
 :root {
@@ -53,6 +53,19 @@ body {
   overflow-y: auto;
   min-height: 100%;
   -webkit-overflow-scrolling: touch;
+}
+
+html.is-intro,
+html.is-intro body {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+.is-intro .nav {
+  opacity: 0;
+  pointer-events: none;
 }
 
 img,
@@ -181,10 +194,14 @@ a {
 
 /* Fraunces — warm 70s display. Soft axis keeps it buttery, not costume. */
 .hero__copy h1,
+.intro__lockup,
 .kinetic__headline,
 .kinetic__ghost,
-.drums,
-.card__title,
+.moments__copy h2,
+.gallery__title,
+.gallery__caption,
+.faq__title,
+.faq__row h3,
 .footer__title {
   font-family: var(--font-display);
   font-optical-sizing: auto;
@@ -237,9 +254,150 @@ a {
   object-position: center 42%;
   pointer-events: none;
   display: block;
-  background: #000 url("../images/hero-poster.jpg?v=3") center / cover no-repeat;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+  opacity: 0;
+}
+
+.hero__video--intro {
+  z-index: 1;
+  background: #000 url("../images/hero-intro-start.jpg?v=1") center / cover no-repeat;
+}
+
+.hero__video--drive {
+  z-index: 0;
+  background: #000 url("../images/hero-poster.jpg?v=3") center / cover no-repeat;
+}
+
+.hero.is-live .hero__video--intro {
+  opacity: 1;
+}
+
+.hero.is-drive .hero__video--drive {
+  opacity: 1;
+}
+
+.hero.is-drive .hero__video--intro {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@property --r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.intro {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  background: var(--cream);
+  color: #14110e;
+  overflow: hidden;
+}
+
+.intro.is-done {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro__lockup {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  font-weight: 600;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.intro__line {
+  display: block;
+}
+
+.intro__line--top,
+.intro__line--bot {
+  font-size: clamp(1.35rem, 6.2vw, 4.6rem);
+  letter-spacing: 0.08em;
+}
+
+.intro__line--kombi {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-size: clamp(3.6rem, 18vw, 13.5rem);
+  letter-spacing: -0.045em;
+  margin: 0.06em 0 0.08em;
+}
+
+.intro__o {
+  position: relative;
+  display: inline-block;
+}
+
+.intro__portal {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  --x: 50%;
+  --y: 50%;
+  --r: 0px;
+  clip-path: circle(var(--r) at var(--x) var(--y));
+  transition: opacity 0.55s ease;
+}
+
+.intro.is-fill .intro__portal {
+  opacity: 1;
+}
+
+.intro.is-fill .intro__o {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.intro.is-zoom .intro__portal {
+  transition: opacity 0.55s ease, --r 1.55s cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+.intro.is-fade .intro__lockup {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.intro.is-fade {
+  background: transparent;
+  transition: background-color 0.35s ease;
+}
+
+.intro__still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  max-width: none;
+  transform: scale(1);
+}
+
+.intro.is-zoom .intro__still {
+  transform: scale(1.12);
+  transition: transform 1.55s cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+.is-intro .hero__copy,
+.is-intro .hero__scroll,
+.is-intro .hero__vignette {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .hero__vignette {
@@ -388,166 +546,220 @@ a {
   color: var(--ink-dim);
 }
 
-/* ----- Section 3: Digit drums + one photo per year ---------------------- */
+/* ----- Section 3: Occasions — photo left, caption right ----------------- */
 
-.timeline {
+.moments {
   position: relative;
-  height: 580vh;
+  height: 360vh;
+  background: #070806;
   border-top: 1px solid var(--hairline);
 }
 
-.timeline__sticky {
+.moments__sticky {
   position: sticky;
   top: 0;
   height: 100svh;
   height: 100dvh;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(16rem, 0.9fr);
   align-items: center;
-  gap: clamp(1.5rem, 3.2vw, 3.5rem);
+  gap: clamp(1.75rem, 6vw, 6.5rem);
+  padding: calc(var(--nav-h) + 1.25rem) var(--pad) 2.5rem;
   overflow: clip;
-  padding: calc(var(--nav-h) + 1rem) var(--pad) 2rem;
   touch-action: pan-y;
 }
 
-.timeline__mast {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-}
-
-.drums {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.02em;
-  margin-top: 0.4rem;
-  font-size: clamp(3.6rem, 8.4vw, 8rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: var(--cream);
-}
-
-.drums__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
-
-.drum {
+.moments__frame {
   position: relative;
-  height: 1em;
+  width: 100%;
+  max-height: min(78vh, 46rem);
+  aspect-ratio: 3 / 4;
+  border-radius: 0.85rem;
   overflow: hidden;
-  /* Soft fade so neighbouring ticks dissolve like a real drum */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  background: #111;
 }
 
-.drum:last-child {
-  color: var(--sage);
-}
-
-.drum__strip {
-  display: flex;
-  flex-direction: column;
-  will-change: transform;
-}
-
-.drum__cell {
-  height: 1em;
-  display: flex;
-  align-items: center;
-}
-
-.rail-viewport {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
-.rail {
+.moments__photos,
+.moments__photos img {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: stretch;
-  gap: var(--rail-gap);
   width: 100%;
   height: 100%;
-  will-change: transform;
 }
 
-.card {
+.moments__photos img {
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+
+.moments__photos img.is-on {
+  opacity: 1;
+}
+
+.moments__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  z-index: 2;
+}
+
+.moments__bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.moments__copy {
   position: relative;
-  flex: 0 0 100%;
+  min-height: 12rem;
+}
+
+.moments__copy article {
+  position: absolute;
+  left: 0;
+  top: 50%;
   width: 100%;
-  height: 100%;
-  border-radius: 1.25rem;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.moments__copy article.is-on {
+  opacity: 1;
+  visibility: visible;
+}
+
+.moments__copy .eyebrow {
+  color: rgba(244, 241, 234, 0.55);
+  margin-bottom: 1.1rem;
+}
+
+.moments__copy h2 {
+  font-size: clamp(2.1rem, 4.6vw, 4.15rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #fff;
+}
+
+/* ----- Section 4: Three portraits --------------------------------------- */
+
+.gallery,
+.faq {
+  --on: #14110e;
+  --on-dim: rgba(20, 17, 14, 0.56);
+  --line: rgba(20, 17, 14, 0.14);
+  background: var(--cream);
+  color: var(--on);
+}
+
+.gallery {
+  padding: clamp(4.5rem, 10vh, 7.5rem) var(--pad) clamp(5rem, 12vh, 8rem);
+}
+
+.gallery__title {
+  font-size: clamp(2.4rem, 5.4vw, 4.4rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: clamp(2.5rem, 6vh, 4.25rem);
+}
+
+.gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.gallery__frame {
+  border-radius: 0.2rem;
   overflow: hidden;
-  background: #0a0a0a;
+  aspect-ratio: 3 / 4;
+  background: #d8d0c0;
 }
 
-.card__frame {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card__frame img {
+.gallery__frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-  filter: saturate(0.92) contrast(1.05);
 }
 
-.card__chip {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 1rem;
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.75rem;
-  background: rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--hairline);
-}
-
-.card__index {
-  font-size: 0.62rem;
-  letter-spacing: 0.28em;
+.gallery__label {
+  margin-top: 1.05rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--sage);
-  flex: 0 0 auto;
-  padding-bottom: 0.15rem;
+  color: var(--on-dim);
 }
 
-.card__title {
-  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+.gallery__caption {
+  margin-top: 0.45rem;
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.15;
+  line-height: 1.25;
+  max-width: 18ch;
 }
 
-.card__body {
-  margin-top: 0.25rem;
-  font-size: 0.82rem;
-  font-weight: 300;
-  color: var(--ink-dim);
-  max-width: 42ch;
+/* ----- Section 5: FAQ --------------------------------------------------- */
+
+.faq {
+  padding: clamp(4.5rem, 10vh, 7.5rem) var(--pad) clamp(5.5rem, 12vh, 8.5rem);
+  border-top: 1px solid var(--line);
+}
+
+.faq__mark {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--on-dim);
+  margin-bottom: 1rem;
+}
+
+.faq__title {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  max-width: 16ch;
+  margin-bottom: clamp(2.75rem, 7vh, 4.5rem);
+}
+
+.faq__list {
+  border-top: 1px solid var(--line);
+}
+
+.faq__row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: clamp(1.5rem, 5vw, 5rem);
+  padding: clamp(1.35rem, 3vh, 2rem) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.faq__row h3 {
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.faq__row p {
+  font-size: clamp(0.95rem, 1.3vw, 1.08rem);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--on-dim);
+  max-width: 46ch;
 }
 
 /* ----- Footer ----------------------------------------------------------- */
@@ -692,26 +904,38 @@ a {
 /* ----- Reduced motion --------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .timeline { height: auto; }
-  .timeline__sticky {
+  .moments { height: auto; }
+  .moments__sticky {
     position: relative;
     height: auto;
+    display: flex;
+    flex-direction: column;
   }
-  .rail-viewport {
-    overflow: visible;
-  }
-  .rail {
+  .moments__photos img,
+  .moments__copy article {
     position: relative;
-    inset: auto;
-    flex-wrap: wrap;
-    transform: none !important;
-  }
-  .card {
-    flex: 1 1 100%;
-    height: 56vw;
-    min-height: 16rem;
-    transform: none;
     opacity: 1;
+    visibility: visible;
+    transform: none;
+    inset: auto;
+  }
+  .moments__photos {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+  }
+  .moments__photos img {
+    position: relative;
+    aspect-ratio: 3 / 4;
+  }
+  .moments__copy {
+    min-height: 0;
+  }
+  .moments__copy article {
+    position: relative;
+    top: auto;
+    transform: none;
+    margin-bottom: 2rem;
   }
   .sharpen {
     --open: 100;
@@ -721,6 +945,26 @@ a {
     mask-image: none;
   }
   .hero__scroll i { animation: none; }
+
+  html.is-intro,
+  html.is-intro body {
+    overflow: auto;
+    height: auto;
+    touch-action: pan-y;
+  }
+
+  .intro {
+    display: none;
+  }
+
+  .hero__video--drive {
+    opacity: 1;
+  }
+
+  .hero__video--intro {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 /* ----- Breakpoints ------------------------------------------------------ */
@@ -750,39 +994,68 @@ a {
     font-size: clamp(3.4rem, 22vw, 6rem);
   }
 
-  .timeline {
-    height: 520vh;
-  }
-
   .hero {
     height: 360vh;
   }
 
-  .timeline__sticky {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    padding: calc(var(--nav-h) + 0.75rem) var(--pad) 1.25rem;
+  .moments {
+    height: 300vh;
   }
 
-  .timeline__mast {
-    flex: 0 0 auto;
+  .moments__sticky {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 1.5rem;
+    padding: calc(var(--nav-h) + 0.85rem) var(--pad) 1.5rem;
   }
 
-  .rail-viewport {
-    flex: 1 1 auto;
-    height: auto;
+  .moments__frame {
+    max-height: 48vh;
+    aspect-ratio: 4 / 3;
+    justify-self: center;
+    width: min(100%, 34rem);
   }
 
-  .drums {
-    font-size: clamp(3.2rem, 16vw, 5.2rem);
+  .moments__copy {
+    min-height: 7.5rem;
   }
 
-  .card__chip {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.35rem;
+  .moments__copy h2 {
+    font-size: clamp(1.85rem, 8vw, 2.6rem);
   }
+
+  .gallery__grid {
+    grid-template-columns: 1fr;
+    gap: 2.25rem;
+  }
+
+  .gallery__frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .gallery__caption {
+    max-width: 28ch;
+  }
+
+  .faq__title {
+    max-width: none;
+  }
+
+  .faq__row {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .intro__line--top,
+  .intro__line--bot {
+    font-size: clamp(1.05rem, 7vw, 2rem);
+    letter-spacing: 0.12em;
+  }
+
+  .intro__line--kombi {
+    font-size: clamp(3.1rem, 22vw, 6.4rem);
+  }
+
 }
 
 @media (max-width: 520px) {

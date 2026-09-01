@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="is-intro">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -14,10 +14,10 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=footer-play" />
+  <link rel="stylesheet" href="css/styles.css?v=moments1" />
 </head>
 <body>
-  <div class="veil" id="veil" aria-hidden="true">
+  <div class="veil is-gone" id="veil" aria-hidden="true">
     <span class="veil__mark">MISS OLIVIA</span>
   </div>
 
@@ -29,7 +29,7 @@
     <nav class="nav__links" aria-label="Primary">
       <a href="#hero">Olivia</a>
       <a href="#kinetic">Style</a>
-      <a href="#timeline">Hire</a>
+      <a href="#moments">Hire</a>
       <a href="#book">Book</a>
     </nav>
     <p class="nav__meta">1972 &nbsp;·&nbsp; 572-PG5</p>
@@ -42,8 +42,19 @@
   <section class="hero" id="hero">
     <div class="hero__sticky">
       <video
+        id="hero-intro-video"
+        class="hero__video hero__video--intro"
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        poster="images/hero-intro-start.jpg?v=1"
+      >
+        <source src="videos/hero-reverse.mp4?v=1" type="video/mp4" />
+      </video>
+      <video
         id="hero-video"
-        class="hero__video"
+        class="hero__video hero__video--drive"
         muted
         playsinline
         webkit-playsinline
@@ -52,6 +63,19 @@
       >
         <source src="videos/hero.mp4?v=1" type="video/mp4" />
       </video>
+
+      <div class="intro" id="intro">
+        <h1 class="intro__lockup" id="intro-lockup" aria-label="Bayside Kombi Adventures">
+          <span class="intro__line intro__line--top">Bayside</span>
+          <span class="intro__line intro__line--kombi">
+            <span class="intro__k">K</span><span class="intro__o" id="intro-o">O</span><span class="intro__mbi">MBI</span>
+          </span>
+          <span class="intro__line intro__line--bot">Adventures</span>
+        </h1>
+        <div class="intro__portal" id="intro-portal" aria-hidden="true">
+          <img class="intro__still intro__still--start" src="images/hero-intro-start.jpg?v=1" alt="" />
+        </div>
+      </div>
 
       <div class="hero__vignette" aria-hidden="true"></div>
 
@@ -91,92 +115,103 @@
       </h2>
     </div>
     <p class="kinetic__aside">
-      Eight seats. One entrance. Miss Olivia is a restored 1972 Kombi —
+      Six seats. One entrance. Miss Olivia is a restored 1972 Kombi —
       booked for weddings, formals, races, and coastal days across the Redlands.
     </p>
   </section>
 
   <!-- ===================================================================
-       SECTION 3 — History: digit drums + one photo per year
-       Year drums sit beside the photo so the pair spans the screen.
-       Vertical scroll slides one photo per milestone.
+       SECTION 3 — Occasions: pinned photo left, caption right, swap on scroll
        =================================================================== -->
-  <section class="timeline" id="timeline">
-    <div class="timeline__sticky">
-      <div class="timeline__mast">
-        <p class="eyebrow">The occasions</p>
-        <div class="drums" id="drums" aria-live="polite" aria-atomic="true">
-          <span class="drums__sr" id="drums-sr">1972</span>
+  <section class="moments" id="moments">
+    <div class="moments__sticky">
+      <div class="moments__frame">
+        <div class="moments__photos" id="moments-photos">
+          <img class="is-on" src="images/wedding.png" alt="Miss Olivia on the beach with white roses and a lace veil" />
+          <img src="images/formals.png" alt="A formal group with Miss Olivia on a city street at golden hour" />
+          <img src="images/coastal-adventure.png" alt="Miss Olivia on the dunes at sunset, hatch open, surfboard against the side" />
         </div>
+        <div class="moments__bar" aria-hidden="true"><i id="moments-bar"></i></div>
       </div>
+      <div class="moments__copy" id="moments-copy">
+        <article class="is-on">
+          <p class="eyebrow">Weddings</p>
+          <h2>White roses.<br />The aisle starts here.</h2>
+        </article>
+        <article>
+          <p class="eyebrow">Formals</p>
+          <h2>Satin and sage.<br />One entrance.</h2>
+        </article>
+        <article>
+          <p class="eyebrow">Coastal</p>
+          <h2>Hatch open.<br />Tide out.</h2>
+        </article>
+      </div>
+    </div>
+  </section>
 
-      <div class="rail-viewport" id="rail-viewport">
-        <div class="rail" id="rail">
-          <article class="card is-active" data-year="1972">
-            <figure class="card__frame">
-              <img src="images/profile.jpg" alt="Miss Olivia, the 1972 two-tone Kombi" />
-            </figure>
-            <div class="card__chip">
-              <p class="card__index">01</p>
-              <div>
-                <h3 class="card__title">Meet Miss Olivia</h3>
-                <p class="card__body">A 1972 Bay Window. Sage over cream. Eight seats, chrome heart, whitewall tyres.</p>
-              </div>
-            </div>
-          </article>
+  <!-- ===================================================================
+       SECTION 4 — Three portraits, cream page
+       =================================================================== -->
+  <section class="gallery" id="adventures">
+    <header class="gallery__head">
+      <h2 class="gallery__title sharpen">Bayside Kombi Adventures</h2>
+    </header>
+    <div class="gallery__grid">
+      <article class="gallery__item">
+        <figure class="gallery__frame">
+          <img src="images/profile.jpg" alt="Miss Olivia at the jetty, sage over cream, plate 572-PG5" />
+        </figure>
+        <p class="gallery__label">The Kombi</p>
+        <h3 class="gallery__caption">A 1972 Bay Window. Sage over cream.</h3>
+      </article>
+      <article class="gallery__item">
+        <figure class="gallery__frame">
+          <img src="images/interior.jpg" alt="Restored sage and cream interior with red piping" />
+        </figure>
+        <p class="gallery__label">The Cabin</p>
+        <h3 class="gallery__caption">Six seats. Sage bolsters. A thread of red piping.</h3>
+      </article>
+      <article class="gallery__item">
+        <figure class="gallery__frame">
+          <img src="images/coastal.jpg" alt="Miss Olivia parked by the Wellington Point shoreline at dusk" />
+        </figure>
+        <p class="gallery__label">The Shore</p>
+        <h3 class="gallery__caption">Wellington Point and the Redlands coastline.</h3>
+      </article>
+    </div>
+  </section>
 
-          <article class="card" data-year="2018">
-            <figure class="card__frame">
-              <img src="images/interior.jpg" alt="Restored green and cream Kombi interior" />
-            </figure>
-            <div class="card__chip">
-              <p class="card__index">02</p>
-              <div>
-                <h3 class="card__title">The Restoration</h3>
-                <p class="card__body">Brought back by hand in Queensland. Sage bolsters, cream inserts, a thread of red piping.</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="card" data-year="2022">
-            <figure class="card__frame">
-              <img src="images/wedding.png" alt="Miss Olivia on the beach, dressed for a wedding with white roses and lace" />
-            </figure>
-            <div class="card__chip">
-              <p class="card__index">03</p>
-              <div>
-                <h3 class="card__title">Weddings</h3>
-                <p class="card__body">Bride and groom transport, bridal party arrivals, and a picture-perfect backdrop.</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="card" data-year="2024">
-            <figure class="card__frame">
-              <img src="images/formals.png" alt="A formal group with Miss Olivia on a city street at golden hour" />
-            </figure>
-            <div class="card__chip">
-              <p class="card__index">04</p>
-              <div>
-                <h3 class="card__title">Formals &amp; Occasions</h3>
-                <p class="card__body">School formals, races, and girls’ days. The unforgettable retro entrance.</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="card" data-year="2026">
-            <figure class="card__frame">
-              <img src="images/coastal-adventure.png" alt="Miss Olivia on the dunes at sunset, hatch open, surfboard against the side" />
-            </figure>
-            <div class="card__chip">
-              <p class="card__index">05</p>
-              <div>
-                <h3 class="card__title">Coastal Adventures</h3>
-                <p class="card__body">Wellington Point and the Redlands shoreline. Book the Kombi. Arrive in style.</p>
-              </div>
-            </div>
-          </article>
-        </div>
+  <!-- ===================================================================
+       SECTION 5 — FAQ
+       =================================================================== -->
+  <section class="faq" id="faq">
+    <p class="faq__mark">(answers)</p>
+    <h2 class="faq__title sharpen">A clear first read for early conversations.</h2>
+    <div class="faq__list">
+      <div class="faq__row">
+        <h3>What is Bayside Kombi Adventures?</h3>
+        <p>A chauffeured 1972 Volkswagen Kombi hire in Wellington Point — booked for weddings, formals, races, and coastal days across the Redlands.</p>
+      </div>
+      <div class="faq__row">
+        <h3>Who is Miss Olivia?</h3>
+        <p>A restored two-tone sage and cream Type 2 Bay Window. Plate 572-PG5. Six seats, chrome heart, whitewall tyres.</p>
+      </div>
+      <div class="faq__row">
+        <h3>How many guests can she carry?</h3>
+        <p>Six guests, chauffeured. The driver is included — you ride, she arrives.</p>
+      </div>
+      <div class="faq__row">
+        <h3>What occasions do you book?</h3>
+        <p>Bride and groom transport, bridal party arrivals, school formals, races, girls’ days, and coastal adventures along the bay.</p>
+      </div>
+      <div class="faq__row">
+        <h3>Where do you travel?</h3>
+        <p>Wellington Point and the Redlands shoreline, with coastal runs across South East Queensland by arrangement.</p>
+      </div>
+      <div class="faq__row">
+        <h3>How do I book?</h3>
+        <p>Call 0407 144 483 or write to baysidekombi@gmail.com. We reply by phone or email.</p>
       </div>
     </div>
   </section>
@@ -201,7 +236,7 @@
     <div class="footer__copy">
       <p class="footer__eyebrow">Bayside Kombi Adventures &nbsp;·&nbsp; Wellington Point</p>
       <p class="footer__title sharpen">Book Miss Olivia.</p>
-      <p class="footer__lede">Weddings, formals, and coastal days. Chauffeured. Eight seats. One entrance.</p>
+      <p class="footer__lede">Weddings, formals, and coastal days. Chauffeured. Six seats. One entrance.</p>
       <div class="footer__actions">
         <a class="footer__cta" href="tel:0407144483">0407 144 483</a>
         <a class="footer__cta footer__cta--ghost" href="mailto:baysidekombi@gmail.com">baysidekombi@gmail.com</a>
@@ -213,6 +248,6 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=footer-play"></script>
+  <script src="js/main.js?v=moments1"></script>
 </body>
 </html>

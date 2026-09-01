@@ -1,7 +1,7 @@
 /* ============================================================================
    Bayside Kombi — scroll choreography
-   Porsche mechanics on GSAP: long hero pin, sharpen type, digit drums,
-   vertical-scroll → horizontal rail.
+   Porsche mechanics on GSAP: long hero pin, sharpen type,
+   pinned occasion slides, cream gallery, FAQ.
    ============================================================================ */
 
 (() => {
@@ -73,10 +73,15 @@
   }
 
   /* ----------------------------------------------------------------------
-     1. HERO — 1080p video, time scrubbed to scroll
+     1. HERO — intro lockup → O zoom → ReverseVid4 → hero.mp4 scroll scrub
      ---------------------------------------------------------------------- */
   const hero = document.getElementById("hero");
+  const introVideo = document.getElementById("hero-intro-video");
   const video = document.getElementById("hero-video");
+  const intro = document.getElementById("intro");
+  const introLockup = document.getElementById("intro-lockup");
+  const introO = document.getElementById("intro-o");
+  const introPortal = document.getElementById("intro-portal");
   const heroLines = gsap.utils.toArray(".hero__line");
 
   if (heroLines.length && !reduceMotion) sharpenSet(heroLines);
@@ -86,11 +91,23 @@
     target: 0,
     seeking: false,
     ready: false,
+    playingIntro: false,
     seekTimer: 0,
   };
 
+  function muteEl(el) {
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    el.playsInline = true;
+    el.preload = "auto";
+    el.setAttribute("muted", "");
+    el.setAttribute("playsinline", "");
+    el.setAttribute("webkit-playsinline", "");
+  }
+
   function applyHeroTime() {
-    if (!heroState.ready || !video) return;
+    if (!video || !heroState.ready || heroState.playingIntro) return;
     const next = heroState.target;
     if (!Number.isFinite(next)) return;
     if (Math.abs(video.currentTime - next) < (isIOS ? 0.05 : 0.02)) return;
@@ -117,6 +134,17 @@
   }
 
   gsap.ticker.add(applyHeroTime);
+
+  function revealHeroCopy() {
+    gsap.set(".hero__copy, .hero__scroll, .hero__vignette", { visibility: "visible" });
+    gsap.to(".hero__copy, .hero__scroll, .hero__vignette", {
+      opacity: 1,
+      duration: 0.7,
+      ease: "power2.out",
+    });
+    if (heroLines.length && !reduceMotion) sharpenTo(heroLines, { delay: 0.05 });
+    else gsap.set(heroLines, { clearProps: "filter,transform,opacity" });
+  }
 
   function wireHeroCopy() {
     gsap.to(".hero__copy", {
@@ -151,46 +179,38 @@
     heroState.duration = duration;
     heroState.ready = true;
     video.pause();
-    try {
-      video.currentTime = 0;
-    } catch (_) {}
     liftVeil();
 
-    if (heroLines.length && !reduceMotion) {
-      sharpenSet(heroLines);
-      sharpenTo(heroLines, { delay: 0.15 });
-    }
-
     const proxy = { t: 0 };
-    gsap.to(proxy, {
-      t: Math.max(0, duration - 0.04),
-      ease: "none",
-      scrollTrigger: {
-        trigger: hero,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: isIOS ? 0.05 : 0.12,
-        invalidateOnRefresh: true,
-      },
-      onUpdate: () => {
-        heroState.target = proxy.t;
-        applyHeroTime();
-      },
-    });
+    gsap.fromTo(
+      proxy,
+      { t: 0 },
+      {
+        t: Math.max(0, duration - 0.04),
+        ease: "none",
+        scrollTrigger: {
+          trigger: hero,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: isIOS ? 0.05 : 0.12,
+          invalidateOnRefresh: true,
+        },
+        onUpdate: () => {
+          heroState.target = proxy.t;
+          applyHeroTime();
+        },
+      }
+    );
   }
 
   function primeHero() {
-    if (!video) return;
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
+    if (!video || heroState.playingIntro || !heroState.ready) return;
+    muteEl(video);
     const play = video.play();
     if (play && typeof play.then === "function") {
       play
         .then(() => {
+          if (heroState.playingIntro) return;
           video.pause();
           applyHeroTime();
         })
@@ -198,59 +218,197 @@
     }
   }
 
-  async function loadHeroAsBlob() {
-    const src = video.currentSrc || video.querySelector("source")?.src;
+  async function loadVideoBlob(el) {
+    if (!el) return;
+    const src = el.currentSrc || el.querySelector("source")?.src;
     if (!src || src.startsWith("blob:")) return;
     const res = await fetch(src);
     if (!res.ok) return;
     const url = URL.createObjectURL(await res.blob());
     await new Promise((resolve, reject) => {
       const done = () => resolve();
-      video.addEventListener("loadedmetadata", done, { once: true });
-      video.addEventListener("error", () => reject(new Error("hero blob")), { once: true });
-      while (video.firstChild) video.removeChild(video.firstChild);
-      video.src = url;
-      video.load();
+      el.addEventListener("loadedmetadata", done, { once: true });
+      el.addEventListener("error", () => reject(new Error("video blob")), { once: true });
+      while (el.firstChild) el.removeChild(el.firstChild);
+      el.src = url;
+      el.load();
     });
   }
 
-  function bindHeroVideo() {
-    video.addEventListener("loadedmetadata", wireHeroScrub);
-    video.addEventListener("durationchange", wireHeroScrub);
-    video.addEventListener("canplay", wireHeroScrub);
-    if (video.readyState >= 1) wireHeroScrub();
-    primeHero();
+  function portalClip(expand) {
+    if (!introO || !introPortal || !hero) return { x: "50%", y: "50%", r: 0 };
+    const sticky = hero.querySelector(".hero__sticky") || hero;
+    const o = introO.getBoundingClientRect();
+    const stage = sticky.getBoundingClientRect();
+    const x = o.left - stage.left + o.width / 2;
+    const y = o.top - stage.top + o.height / 2;
+    const r = expand
+      ? Math.hypot(stage.width, stage.height)
+      : Math.max(o.width, o.height) * 0.46;
+    introPortal.style.setProperty("--x", `${x}px`);
+    introPortal.style.setProperty("--y", `${y}px`);
+    introPortal.style.setProperty("--r", `${r}px`);
+    return { x, y, r };
+  }
+
+  function waitForReady(el) {
+    return new Promise((resolve) => {
+      if (!el) {
+        resolve();
+        return;
+      }
+      const ready = () => {
+        if (el.duration && Number.isFinite(el.duration)) resolve();
+        else window.setTimeout(ready, 80);
+      };
+      ready();
+      window.setTimeout(resolve, 5000);
+    });
+  }
+
+  function playIntroClip() {
+    if (!introVideo) return Promise.resolve();
+    heroState.playingIntro = true;
+    muteEl(introVideo);
+    introVideo.loop = false;
+    try {
+      introVideo.currentTime = 0;
+    } catch (_) {}
+    const play = introVideo.play();
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        heroState.playingIntro = false;
+        introVideo.pause();
+        resolve();
+      };
+      introVideo.addEventListener("ended", done, { once: true });
+      if (play && typeof play.catch === "function") {
+        play.catch(() => window.setTimeout(done, 800));
+      }
+      window.setTimeout(done, ((introVideo.duration || 8) + 1.5) * 1000);
+    });
+  }
+
+  function retireIntroVideo() {
+    if (!introVideo) return;
+    introVideo.pause();
+    introVideo.removeAttribute("src");
+    while (introVideo.firstChild) introVideo.removeChild(introVideo.firstChild);
+    try {
+      introVideo.load();
+    } catch (_) {}
+  }
+
+  async function handoffToDrive() {
+    await waitForReady(video);
+    if (hero) {
+      hero.classList.add("is-live");
+      hero.classList.add("is-drive");
+    }
+    if (video) {
+      try {
+        video.currentTime = 0;
+      } catch (_) {}
+      video.pause();
+    }
+    retireIntroVideo();
+  }
+
+  function unlockHero() {
+    document.documentElement.classList.remove("is-intro");
+    window.removeEventListener("touchmove", lockIntroTouch, { passive: false });
+    if (hero) {
+      hero.classList.add("is-live");
+      hero.classList.add("is-drive");
+    }
+    if (intro) intro.classList.add("is-done");
+    liftVeil();
+    revealHeroCopy();
+    wireHeroCopy();
+    wireHeroScrub();
+    ScrollTrigger.refresh();
+  }
+
+  function lockIntroTouch(event) {
+    event.preventDefault();
+  }
+
+  let introStarted = false;
+
+  function runHeroIntro() {
+    if (introStarted) return;
+    introStarted = true;
+
+    if (!intro || !introLockup || reduceMotion) {
+      if (hero) {
+        hero.classList.add("is-live");
+        hero.classList.add("is-drive");
+      }
+      if (intro) intro.classList.add("is-done");
+      gsap.set(".hero__copy, .hero__scroll, .hero__vignette", { opacity: 1, visibility: "visible" });
+      document.documentElement.classList.remove("is-intro");
+      if (heroLines.length && !reduceMotion) sharpenTo(heroLines);
+      wireHeroCopy();
+      wireHeroScrub();
+      return;
+    }
+
+    window.addEventListener("touchmove", lockIntroTouch, { passive: false });
+
+    const sticky = hero ? hero.querySelector(".hero__sticky") : null;
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+    portalClip(false);
+
+    (async () => {
+      intro.classList.add("is-in");
+      await wait(1400);
+      portalClip(false);
+      intro.classList.add("is-fill");
+      await wait(700);
+      await waitForReady(introVideo);
+      const endR = Math.hypot(
+        (sticky && sticky.clientWidth) || window.innerWidth,
+        (sticky && sticky.clientHeight) || window.innerHeight
+      );
+      intro.classList.add("is-zoom");
+      await wait(40);
+      introPortal.style.setProperty("--r", `${endR}px`);
+      await wait(1550);
+      intro.classList.add("is-fade");
+      if (hero) hero.classList.add("is-live");
+      await wait(400);
+      introPortal.style.opacity = "0";
+      intro.classList.add("is-done");
+      await playIntroClip();
+      await handoffToDrive();
+      unlockHero();
+    })();
+  }
+
+  function prepareHeroVideo() {
+    muteEl(introVideo);
+    muteEl(video);
+    if (introVideo) introVideo.addEventListener("error", liftVeil, { once: true });
+    if (video) video.addEventListener("error", liftVeil, { once: true });
+    window.addEventListener("pointerdown", primeHero, { once: true, passive: true });
+    window.addEventListener("touchend", primeHero, { once: true, passive: true });
+    ScrollTrigger.addEventListener("scrollStart", primeHero);
+
+    if (video && !isIOS) {
+      loadVideoBlob(video).catch(() => {});
+    }
+    runHeroIntro();
   }
 
   if (isIOS) ScrollTrigger.normalizeScroll(true);
 
   liftVeil();
   window.setTimeout(liftVeil, 800);
-  wireHeroCopy();
-
-  if (video) {
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.preload = "auto";
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
-    video.addEventListener("error", liftVeil, { once: true });
-    window.addEventListener("pointerdown", primeHero, { once: true, passive: true });
-    window.addEventListener("touchend", primeHero, { once: true, passive: true });
-    ScrollTrigger.addEventListener("scrollStart", primeHero);
-
-    if (isIOS) bindHeroVideo();
-    else {
-      Promise.race([
-        loadHeroAsBlob(),
-        new Promise((resolve) => window.setTimeout(resolve, 4000)),
-      ])
-        .catch(() => {})
-        .finally(() => bindHeroVideo());
-    }
-  }
+  prepareHeroVideo();
 
   /* ----------------------------------------------------------------------
      2. KINETIC TYPE — lift + rack into focus, ghost stays soft
@@ -360,122 +518,71 @@
   }
 
   /* ----------------------------------------------------------------------
-     3. HISTORY — four digit drums + one photo per year
-     Year 1972–2026. Ones spin continuously; higher places click.
-     Rail X is keyed to milestone years so each card fills the frame.
+     3. OCCASIONS — pinned photo + caption, three beats on scroll
      ---------------------------------------------------------------------- */
-  const YEAR_START = 1972;
-  const YEAR_END = 2026;
-  const MILESTONES = [1972, 2018, 2022, 2024, 2026];
-  const SPAN = YEAR_END - YEAR_START;
+  const moments = document.getElementById("moments");
+  const momentPhotos = gsap.utils.toArray("#moments-photos img");
+  const momentCopy = gsap.utils.toArray("#moments-copy article");
+  const momentBar = document.getElementById("moments-bar");
+  const momentCount = Math.max(momentPhotos.length, momentCopy.length, 1);
 
-  const drumsRoot = document.getElementById("drums");
-  const drumsSr = document.getElementById("drums-sr");
-  const rail = document.getElementById("rail");
-  const railViewport = document.getElementById("rail-viewport");
-  const timeline = document.getElementById("timeline");
-  const cards = gsap.utils.toArray(".card");
-
-  if (drumsRoot) {
-    for (let i = 0; i < 4; i += 1) {
-      const drum = document.createElement("div");
-      drum.className = "drum";
-      const strip = document.createElement("div");
-      strip.className = "drum__strip";
-      // 0–9 plus a trailing 0 so 9.x can roll forward onto a zero
-      for (let n = 0; n <= 10; n += 1) {
-        const cell = document.createElement("span");
-        cell.className = "drum__cell";
-        cell.textContent = String(n % 10);
-        strip.appendChild(cell);
-      }
-      drum.appendChild(strip);
-      drumsRoot.appendChild(drum);
-    }
+  function setMoment(index) {
+    const next = gsap.utils.clamp(0, momentCount - 1, index);
+    momentPhotos.forEach((el, i) => el.classList.toggle("is-on", i === next));
+    momentCopy.forEach((el, i) => el.classList.toggle("is-on", i === next));
   }
 
-  const strips = gsap.utils.toArray(".drum__strip");
-
-  function digitForPlace(yearFloat, place) {
-    if (place === 0) return ((yearFloat % 10) + 10) % 10;
-    return Math.floor(yearFloat / 10 ** place) % 10;
+  function applyMoments(progress) {
+    const p = gsap.utils.clamp(0, 1, progress);
+    if (momentBar) momentBar.style.transform = `scaleX(${p})`;
+    const index = Math.min(momentCount - 1, Math.floor(p * momentCount - 0.001));
+    setMoment(p >= 1 ? momentCount - 1 : index);
   }
 
-  function setDrums(yearFloat) {
-    if (!strips.length) return;
-    const cellH = strips[0].parentElement.offsetHeight;
-    if (!cellH) return;
-    // thousands, hundreds, tens, ones
-    [3, 2, 1, 0].forEach((place, i) => {
-      gsap.set(strips[i], { y: -digitForPlace(yearFloat, place) * cellH });
-    });
-    if (drumsSr) drumsSr.textContent = String(Math.round(yearFloat));
-  }
-
-  function cardStride() {
-    if (railViewport) return railViewport.clientWidth;
-    if (!cards.length) return 0;
-    const styles = window.getComputedStyle(rail);
-    const gap = parseFloat(styles.columnGap || styles.gap) || 0;
-    return cards[0].offsetWidth + gap;
-  }
-
-  function railXForYear(yearFloat) {
-    let i = 0;
-    for (let k = 0; k < MILESTONES.length - 1; k += 1) {
-      if (yearFloat >= MILESTONES[k]) i = k;
-    }
-    const a = MILESTONES[i];
-    const b = MILESTONES[Math.min(i + 1, MILESTONES.length - 1)];
-    const t = b === a ? 0 : gsap.utils.clamp(0, 1, (yearFloat - a) / (b - a));
-    return -(i + t) * cardStride();
-  }
-
-  function setActiveCard(yearFloat) {
-    let active = MILESTONES[0];
-    for (let i = 0; i < MILESTONES.length; i += 1) {
-      if (yearFloat >= MILESTONES[i] - 0.5) active = MILESTONES[i];
-    }
-    cards.forEach((el) => {
-      el.classList.toggle("is-active", Number(el.dataset.year) === active);
-    });
-  }
-
-  const snapPoints = MILESTONES.map((y) => (y - YEAR_START) / SPAN);
-
-  function applyHistory(progress) {
-    const yearFloat = YEAR_START + progress * SPAN;
-    setDrums(yearFloat);
-    if (rail) gsap.set(rail, { x: railXForYear(yearFloat) });
-    setActiveCard(yearFloat);
-  }
-
-  if (timeline && strips.length && !reduceMotion) {
-    applyHistory(0);
-
+  if (moments && momentPhotos.length && !reduceMotion) {
+    applyMoments(0);
     const proxy = { p: 0 };
     gsap.to(proxy, {
       p: 1,
       ease: "none",
       scrollTrigger: {
-        trigger: timeline,
+        trigger: moments,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.45,
+        scrub: 0.35,
         invalidateOnRefresh: true,
-        snap: {
-          snapTo: snapPoints,
-          duration: { min: 0.22, max: 0.5 },
-          ease: "power2.inOut",
-          inertia: false,
-        },
-        onRefresh: () => applyHistory(proxy.p),
+        onRefresh: () => applyMoments(proxy.p),
       },
-      onUpdate: () => applyHistory(proxy.p),
+      onUpdate: () => applyMoments(proxy.p),
     });
   } else {
-    applyHistory(0);
-    liftVeil();
+    applyMoments(0);
+    momentPhotos.forEach((el) => el.classList.add("is-on"));
+    momentCopy.forEach((el) => el.classList.add("is-on"));
+  }
+
+  const galleryTitle = document.querySelector(".gallery__title");
+  if (galleryTitle && !reduceMotion) {
+    sharpenSet(galleryTitle);
+    sharpenTo(galleryTitle, {
+      scrollTrigger: {
+        trigger: ".gallery",
+        start: "top 78%",
+        once: true,
+      },
+    });
+  }
+
+  const faqTitle = document.querySelector(".faq__title");
+  if (faqTitle && !reduceMotion) {
+    sharpenSet(faqTitle);
+    sharpenTo(faqTitle, {
+      scrollTrigger: {
+        trigger: ".faq",
+        start: "top 78%",
+        once: true,
+      },
+    });
   }
 
   if (document.fonts && document.fonts.ready) {
